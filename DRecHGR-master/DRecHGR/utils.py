@@ -25,9 +25,9 @@ def makeTorchAdj(mat, itemNum):  # (15016, 145)
     a = sp.csr_matrix((args.patient, args.patient))  # (15016, 15016)
     b = sp.csr_matrix((itemNum, itemNum))  # (145,145)
     mat = sp.vstack([sp.hstack([a, mat]), sp.hstack(
-        [mat.transpose(), b])])  # (15016, 15161), (145, 15161)vstack纵向拼接,hstack横向拼接,mat=(15161, 15161)
+        [mat.transpose(), b])]) 
     mat = (mat != 0) * 1.0  #
-    mat = (mat + sp.eye(mat.shape[0])) * 1.0  # 创建单位矩阵
+    mat = (mat + sp.eye(mat.shape[0])) * 1.0 
     mat = normalizeAdj(mat)
 
     # make cuda tensor
@@ -38,19 +38,13 @@ def makeTorchAdj(mat, itemNum):  # (15016, 145)
 
 
 def normalizeAdj(mat):
-    degree = np.array(mat.sum(axis=-1))  # 对行求和
+    degree = np.array(mat.sum(axis=-1))  
     dInvSqrt = np.reshape(np.power(degree, -0.5), [-1])  #
-    dInvSqrt[np.isinf(dInvSqrt)] = 0.0  # 判断是否有无穷值
-    dInvSqrtMat = sp.diags(dInvSqrt)  #
+    dInvSqrt[np.isinf(dInvSqrt)] = 0.0 
+    dInvSqrtMat = sp.diags(dInvSqrt) 
     return mat.dot(dInvSqrtMat).transpose().dot(dInvSqrtMat).tocoo()
 
 
-def pairPredict(ancEmbeds, posEmbeds, negEmbeds):
-    return innerProduct(ancEmbeds, posEmbeds) - innerProduct(ancEmbeds, negEmbeds)
-
-
-def innerProduct(usrEmbeds, itmEmbeds):
-    return torch.sum(usrEmbeds * itmEmbeds, dim=-1)
 
 
 class EarlyStopping(object):
