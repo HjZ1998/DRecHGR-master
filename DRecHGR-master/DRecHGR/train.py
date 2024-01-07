@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from Model import Model
 import torch.nn as nn
 
-Test = True  # True, False
+Test = False  # True, False
 
 
 def main():
@@ -22,7 +22,7 @@ def main():
     voc = dill.load(open(voc_path, 'rb'))
     med_voc = voc['med_voc']
     med_dict = med_voc.idx2word
-    # 标签1
+  
     label_path = file + 'labels_med.pkl'
     labels = dill.load(open(label_path, 'rb'))  # (15016, 145)
     labels = torch.tensor(labels, device=args.device)
@@ -33,7 +33,7 @@ def main():
     labels_d = torch.tensor(labels_d, device=args.device)
     # labels = torch.from_numpy(labels)
 
-    # 同构路径
+   
     ddi_adj_path = file + 'ddi_A_final.pkl'
     ehr_adj_path = file + 'ehr_adj_final.pkl'
     patient1_path = file + 'pmp_greater20.pkl'  # 大数据
@@ -42,20 +42,20 @@ def main():
     patient2 = dill.load(open(patient2_path, 'rb'))  # (112732620, 2)
     ddi_adj = dill.load(open(ddi_adj_path, 'rb'))
     ehr_adj = dill.load(open(ehr_adj_path, 'rb'))
-    # 异构路径
+    
     pd_Hetergraph_path = file + 'pd_graph.pkl'
     pm_Hetergraph_path = file + 'pm_graph.pkl'
     pd_Hetergraph = dill.load(open(pd_Hetergraph_path, 'rb'))
     pm_Hetergraph = dill.load(open(pm_Hetergraph_path, 'rb'))
     args.patient = len(data)
-    # 异构图
+     
     pd_Hetertensor = makeTorchAdj(pd_Hetergraph, pd_Hetergraph.shape[1])
     pm_Hetertensor = makeTorchAdj(pm_Hetergraph, pm_Hetergraph.shape[1])  # [3287, 3287]:patient+med
-    # 同构图
-    ddi_adj_list = narry2list(ddi_adj)  # 改成邻接表
+     
+    ddi_adj_list = narry2list(ddi_adj)  # 
     ehr_adj_list = narry2list(ehr_adj)
     args.patient, args.med, args.diag = len(data), ddi_adj.shape[0], pd_Hetergraph.shape[1]
-    # 把邻接矩阵处理成对称的
+    
     patient1 = get_symmetrical_square_matrix(patient1, args.patient)
     patient2 = get_symmetrical_square_matrix(patient2, args.patient)
     pmp_graph = dgl.graph((patient1[:, 0], patient1[:, 1]), num_nodes=args.patient)
@@ -75,10 +75,10 @@ def main():
 
     model = Model(
         num_meta_paths=len(g),
-        patientnum=args.patient,  # 15016
+        patientnum=args.patient,  
         mednum=args.med,
         diagnum=args.diag,
-        featuredim=args.featDim,  # 1870
+        featuredim=args.featDim,  
         nhid=args.nhid,  # 8
         num_heads=args.num_heads,
         dropout=args.dropout,
@@ -128,18 +128,6 @@ def main():
                   )
         torch.save(model.state_dict(), output_file + 'Test_Model_{}.model'.format(version))
         torch.save(model.state_dict(), output_file + 'Model.pth')
-    # Test
-    AUC, AP, top5, top10, top20 = evaluate(
-        model, g, labels, idx_test, pm_Hetergraph, pm_Hetertensor, pd_Hetertensor, loss_fcn, plot=False
-    )
-    print(
-        'Test AUC = %.4f, ' % AUC,
-        'AP = %.4f,' % AP,
-        'top5 = %.4f, ' % top5,
-        'top10 = %.4f, ' % top10,
-        'top20 = %.4f ' % top20,
-    )
-
 
 if __name__ == "__main__":
     main()
